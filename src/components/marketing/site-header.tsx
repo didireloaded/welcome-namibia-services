@@ -1,15 +1,18 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ArrowUpRight, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/ui/brand-logo";
 
 const links = [
-  { label: "Home", href: "#home" },
-  { label: "Our services", href: "#services" },
+  { label: "Home", href: "/" },
+  { label: "Our services", href: "/services" },
   { label: "Destinations", href: "/destinations" },
-  { label: "Your journey", href: "#journey" },
-  { label: "FAQs", href: "#faq" },
+  { label: "Your journey", href: "/journey" },
+  { label: "Packages", href: "/packages" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export function SiteHeader({
@@ -20,36 +23,29 @@ export function SiteHeader({
   overlay?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   return (
     <header
       className={
         overlay ? "hero-header site-header" : "site-header site-header-interior"
       }
     >
-      <Link href="/" className="logo" onClick={() => setOpen(false)}>
-        Arrival<span>NAMIBIA</span>
-      </Link>
+      <BrandLogo />
       <nav
         className={open ? "hero-nav mobile-open" : "hero-nav"}
         aria-label="Main navigation"
       >
         {links.map((link, index) => (
           <Link
-            className={index === 0 ? "active" : ""}
-            href={link.href.startsWith("#") ? (overlay ? link.href : `/${link.href}`) : link.href}
+            className={pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href + "/")) ? "active" : ""}
+            aria-current={pathname === link.href ? "page" : undefined}
+            href={link.href}
             onClick={() => setOpen(false)}
             key={link.href}
           >
             {link.label}
           </Link>
         ))}
-        <Link
-          href="/login"
-          className="site-header-login"
-          onClick={() => setOpen(false)}
-        >
-          Your travel space
-        </Link>
       </nav>
       <Button
         variant={overlay ? "glass" : "primary"}

@@ -360,7 +360,7 @@ function RoundArrow({
   );
 }
 
-export function LandingPage() {
+export function LandingPage({ view = "home" }: { view?: "home" | "packages" | "faq" | "notes" | "journey" }) {
   const [slide, setSlide] = useState(0);
   const [service, setService] = useState<ServiceKey>("visa");
   const [activeCard, setActiveCard] = useState(1);
@@ -388,8 +388,9 @@ export function LandingPage() {
   };
   return (
     <>
-      <main className="site-shell">
-        <section className="hero-panel" id="home">
+      <main className={view === "home" ? "site-shell home-screen" : "site-shell interior-shell"}>
+        {view !== "home" && <SiteHeader onStart={() => setRequest({ service: "visa" })} />}
+        {view === "home" && (<section className="hero-panel" id="home">
           <AnimatePresence mode="wait">
             <motion.div
               key={current.image}
@@ -493,90 +494,10 @@ export function LandingPage() {
               />
             </div>
           </div>
-        </section>
+        </section>)}
 
-        <section className="white-panel services-panel" id="services">
-          <div className="center-heading">
-            <SectionLabel>Our services</SectionLabel>
-            <h2>
-              Every part of your visit.
-              <br />
-              <span>A little more connected.</span>
-            </h2>
-          </div>
-          <Tabs.Root
-            value={service}
-            onValueChange={(value) => {
-              setService(value as ServiceKey);
-              setActiveCard(1);
-              setOpenFaq(0);
-            }}
-          >
-            <Tabs.List className="service-tabs" aria-label="Travel services">
-              {(Object.keys(serviceGroups) as ServiceKey[]).map((key) => (
-                <Tabs.Trigger className="service-tab" value={key} key={key}>
-                  {serviceGroups[key].label}
-                </Tabs.Trigger>
-              ))}
-            </Tabs.List>
-            <Tabs.Content value={service} className="services-content">
-              <div className="service-carousel" ref={cardsRef}>
-                {cards.map((card, index) => (
-                  <article
-                    className={`service-card ${activeCard === index ? "featured" : ""}`}
-                    key={card.title}
-                  >
-                    <button
-                      className="card-select"
-                      aria-label={`Select ${card.title}`}
-                      onClick={() => setActiveCard(index)}
-                    >
-                      <div className="service-card-image">
-                        <Image
-                          src={`/images/${card.image}.jpg`}
-                          alt={card.title}
-                          fill
-                          sizes="(max-width: 650px) 70vw, 300px"
-                        />
-                        <span>{card.label}</span>
-                      </div>
-                    </button>
-                    <div className="service-card-text">
-                      <div>
-                        <h3>{card.title}</h3>
-                        <p>{card.description}</p>
-                      </div>
-                      <button
-                        aria-label={`Enquire about ${card.title}`}
-                        onClick={() => setRequest({ service })}
-                      >
-                        <ArrowUpRight size={17} />
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-              <div className="carousel-controls">
-                <RoundArrow
-                  direction="left"
-                  label="Previous service"
-                  onClick={() => moveCard(-1)}
-                />
-                <div className="carousel-track">
-                  <span
-                    style={{
-                      width: `${100 / cards.length}%`,
-                      left: `${(activeCard / cards.length) * 100}%`,
-                    }}
-                  />
-                </div>
-                <RoundArrow label="Next service" onClick={() => moveCard(1)} />
-              </div>
-            </Tabs.Content>
-          </Tabs.Root>
-        </section>
 
-        <section className="white-panel journey-panel" id="journey">
+        {view === "journey" && (<section className="white-panel journey-panel" id="journey">
           <div className="split-heading">
             <h2>
               A visit with many details.
@@ -671,9 +592,9 @@ export function LandingPage() {
               </Button>
             </div>
           </div>
-        </section>
+        </section>)}
 
-        <section className="packages-panel" id="packages">
+        {view === "packages" && (<section className="packages-panel" id="packages">
           <div className="center-heading">
             <SectionLabel>Service packages</SectionLabel>
             <h2>
@@ -725,9 +646,9 @@ export function LandingPage() {
               </button>
             ))}
           </div>
-        </section>
+        </section>)}
 
-        <section className="white-panel booking-panel" id="how-it-works">
+        {view === "journey" && (<section className="white-panel booking-panel" id="how-it-works">
           <div className="trust-strip">
             <span>
               <ShieldCheck size={19} />
@@ -793,9 +714,9 @@ export function LandingPage() {
               ))}
             </div>
           </div>
-        </section>
+        </section>)}
 
-        <section className="white-panel faq-panel" id="faq">
+        {view === "faq" && (<section className="white-panel faq-panel" id="faq">
           <div>
             <SectionLabel>A few useful answers</SectionLabel>
             <h2>
@@ -822,9 +743,9 @@ export function LandingPage() {
             activeIndex={openFaq}
             onChange={setOpenFaq}
           />
-        </section>
+        </section>)}
 
-        <section className="white-panel notes-panel" id="notes">
+        {view === "notes" && (<section className="white-panel notes-panel" id="notes">
           <div className="split-heading">
             <div>
               <SectionLabel>Travel notes</SectionLabel>
@@ -863,9 +784,9 @@ export function LandingPage() {
               </button>
             ))}
           </div>
-        </section>
+        </section>)}
 
-        <SiteFooter onConsult={() => setContact(true)} />
+        {view !== "home" && <SiteFooter onConsult={() => setContact(true)} />}
       </main>
       <button
         className="whatsapp"

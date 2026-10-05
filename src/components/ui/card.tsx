@@ -5,7 +5,7 @@ export function Card({
   variant = "default",
   ...props
 }: HTMLAttributes<HTMLDivElement> & {
-  variant?: "default" | "interactive" | "flat" | "dark";
+  variant?: "default" | "interactive" | "elevated" | "flat" | "dark";
 }) {
   return (
     <div

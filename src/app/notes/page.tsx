@@ -1,5 +1,5 @@
 import { LandingPage } from "@/components/marketing/landing-page";
 
 export default function NotesPage() {
-  return <LandingPage />;
+  return <LandingPage view="notes" />;
 }

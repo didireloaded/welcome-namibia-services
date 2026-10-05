@@ -15,103 +15,73 @@ import {
   Menu,
   X,
   ChevronRight,
-  Download,
   MapPin,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge, badgeTone } from "@/components/ui/badge";
+import { Table } from "@/components/ui/table";
+import { EmptyState } from "@/components/ui/empty-state";
 import { BrandLogo } from "@/components/ui/brand-logo";
-import {
-  demoApplications,
-  stages,
-  type DemoApplication,
-} from "@/lib/demo-data";
+import { exampleCases, type ApplicationRecord } from "@/lib/example-data";
+import { addJourneyMessage, currentReference, messagesFor, notificationPreferences, saveNotificationPreferences, snapshot, subscribe, updateLocalStatus, updateLocalWorkspace, type JourneyMessage } from "@/lib/browser-store";
 type Tab = "Overview" | "Applications" | "Documents" | "Transfers" | "Payments";
 export function Portal({ admin = false }: { admin?: boolean }) {
   const [tab, setTab] = useState<Tab>("Overview");
-  const [records, setRecords] = useState(demoApplications);
+  const [records, setRecords] = useState(exampleCases);
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [menu, setMenu] = useState(false);
   const [notice, setNotice] = useState("");
   const [driver, setDriver] = useState("Not assigned");
   const [docStatus, setDocStatus] = useState("Awaiting review");
-  const [invoice, setInvoice] = useState(false);
   const [selectedReference, setSelectedReference] = useState("");
+  const [thread,setThread]=useState<JourneyMessage[]>([]);
+  const [messageText,setMessageText]=useState("");
+  const [showPreferences,setShowPreferences]=useState(false);
+  const [preferences,setPreferences]=useState({email:true,whatsapp:false,sms:false});
   useEffect(() => {
-    let active = true;
-    setSelectedReference(
-      localStorage.getItem("arrival-preview-reference") || "",
-    );
-    const load = async () => {
-      try {
-        const [requests, workspace] = await Promise.all([
-          fetch("/api/demo/requests"),
-          fetch("/api/demo/workspace"),
-        ]);
-        if (!requests.ok || !workspace.ok)
-          throw new Error("The preview backend is unavailable.");
-        const [saved, settings] = await Promise.all([
-          requests.json(),
-          workspace.json(),
-        ]);
-        if (active) {
-          setRecords(saved.records);
-          setDriver(settings.driver);
-          setDocStatus(settings.document);
-        }
-      } catch (error) {
-        if (active)
-          setNotice(
-            error instanceof Error
-              ? error.message
-              : "Unable to load saved requests.",
-          );
-      }
+    const load = () => {
+      const saved = snapshot();
+      setRecords(saved.records);
+      setDriver(saved.workspace.driver);
+      setDocStatus(saved.workspace.document);
+      setSelectedReference(currentReference());
+      const reference=currentReference();
+      setThread(reference?messagesFor(reference):[]);
+      setPreferences(notificationPreferences());
     };
-    void load();
-    const timer = setInterval(() => void load(), 10000);
-    return () => {
-      active = false;
-      clearInterval(timer);
-    };
+    load();
+    return subscribe(load);
   }, []);
-  const update = async (id: string, status: string) => {
+  useEffect(()=>{if(showPreferences)setPreferences(notificationPreferences());},[showPreferences]);
+  const update = (id: string, status: string) => {
     try {
-      const response = await fetch("/api/demo/requests", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status }),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error);
+      updateLocalStatus(id, status);
       setRecords((current) =>
-        current.map((record) => (record.id === id ? result.record : record)),
+        current.map((record) => (record.id === id ? { ...record, status, updatedAt:new Date().toISOString() } : record)),
       );
-      setNotice("Sample status saved. Email and SMS are not connected.");
+      setNotice("Status saved on this device. Client messages are not sent.");
     } catch {
       setNotice("The status could not be saved. Please try again.");
     }
   };
-  const saveWorkspace = async (key: "driver" | "document", value: string) => {
+  const saveWorkspace = (key: "driver" | "document", value: string) => {
     try {
-      const response = await fetch("/api/demo/workspace", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key, value }),
-      });
-      if (!response.ok) throw new Error();
+      updateLocalWorkspace(key, value);
       if (key === "driver") setDriver(value);
       else setDocStatus(value);
-      setNotice("Sample workspace updated. No notifications were sent.");
+      setNotice("Saved on this device. No notifications were sent.");
     } catch {
       setNotice("The update could not be saved. Please try again.");
     }
   };
   const client =
     records.find((record) => record.id === selectedReference) ||
-    records.find((record) => record.id === "DEMO-001") ||
     records[0];
-  const stage = Math.max(0, stages.indexOf(client.status));
+  const journeyStages=client.service.toLowerCase().includes("transfer")?["Enquiry saved","Provider details checked","Pick-up confirmed","Journey complete"]:client.service.toLowerCase().includes("medical")?["Enquiry saved","Travel needs reviewed","Visit coordination","Visit complete"]:client.service.toLowerCase().includes("connectivity")?["Enquiry saved","Device compatibility","Plan confirmed","Ready to connect"]:client.service.toLowerCase().includes("stay")||client.service.toLowerCase().includes("vacation")?["Enquiry saved","Availability checked","Options shared","Booking confirmed"]:["Enquiry saved","Agency review","Submitted to authority","Decision recorded"];
+  const stage=client.status==="Documents needed"?1:client.status==="Confirmed"?3:Math.max(0,["Submitted","Under review","Submitted to authority","Decision recorded"].indexOf(client.status));
+  const sendMessage=()=>{try{addJourneyMessage(client.id,messageText,admin?"agency":"traveller");setMessageText("");setNotice("Message saved on this device. No email or WhatsApp message was sent.");}catch{setNotice("Message could not be saved. Please try again.");}};
   const rows = records.filter(
     (r) =>
       (filter === "All" || r.status === filter) &&
@@ -152,10 +122,10 @@ export function Portal({ admin = false }: { admin?: boolean }) {
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <span className="demo-pill">Sample data</span>
-          <p>Shared preview. Use fictional details only.</p>
+          <span className="example-pill">Example cases</span>
+          <p>Live requests stay in this browser.</p>
           <Link href={admin ? "/client" : "/admin"}>
-            {admin ? "Preview client portal" : "Preview agency portal"}
+            {admin ? "Open client view" : "Open agency view"}
             <ArrowUpRight size={13} />
           </Link>
           <Link href="/">
@@ -186,20 +156,17 @@ export function Portal({ admin = false }: { admin?: boolean }) {
             </span>
           </div>
           <div>
-            <span className="portal-demo-label">SAVED DEMO</span>
+            <span className="device-storage-label">ON THIS DEVICE</span>
             <button
-              onClick={() =>
-                setNotice(
-                  "There are no new notifications in this sample workspace.",
-                )
-              }
-              aria-label="View notifications"
+              onClick={() => setShowPreferences((value)=>!value)}
+              aria-label="Notification preferences"
             >
               <Bell size={18} />
             </button>
             <span className="portal-avatar">{admin ? "AN" : "SC"}</span>
           </div>
         </header>
+        {showPreferences&&<div className="portal-notice preferences-panel"><b>Update preferences</b><span>Choose how this device records your preference. Sending updates needs a connected service.</span>{(["email","whatsapp","sms"] as const).map((channel)=><label key={channel}><input type="checkbox" checked={preferences[channel]} onChange={(event)=>{const next={...preferences,[channel]:event.target.checked};setPreferences(next);saveNotificationPreferences(next);}} />{channel === "whatsapp" ? "WhatsApp" : channel[0].toUpperCase()+channel.slice(1)}</label>)}</div>}
         <main className="portal-content">
           <div className="portal-title">
             <div>
@@ -215,14 +182,14 @@ export function Portal({ admin = false }: { admin?: boolean }) {
               </h1>
               <p>
                 {admin
-                  ? "Manage sample enquiries, documents and arrival arrangements."
+                  ? "Manage enquiries, document preparation and arrival arrangements."
                   : "Follow the practical steps around your planned visit to Namibia."}
               </p>
             </div>
-            <Link href="/" className="pill-button dark-button">
+            <ButtonLink href="/">
               {admin ? "View website" : "Make a new enquiry"}
               <ArrowUpRight size={15} />
-            </Link>
+            </ButtonLink>
           </div>
           {notice && (
             <div className="portal-notice" role="status">
@@ -241,46 +208,46 @@ export function Portal({ admin = false }: { admin?: boolean }) {
                 {(admin
                   ? [
                       {
-                        label: "Active requests",
+                        label: "Requests on this device",
                         value: String(records.length).padStart(2, "0"),
-                        note: "Saved sample requests",
+                        note: "Example and current enquiries",
                       },
                       {
                         label: "Needs attention",
-                        value: "02",
-                        note: "Review and documents",
+                        value: String(records.filter((record)=>record.status==="Documents needed"||record.status==="Submitted").length).padStart(2,"0"),
+                        note: "Submitted or awaiting documents",
                       },
                       {
-                        label: "Sample service total",
-                        value: "N$8,400",
-                        note: "Illustrative, not revenue",
+                        label: "Revenue",
+                        value: "Not tracked",
+                        note: "No payment service connected",
                       },
                       {
-                        label: "Upcoming transfers",
-                        value: "01",
-                        note: "Sample booking",
+                        label: "Transfer enquiries",
+                        value: String(records.filter((record)=>record.service.includes("transfer")).length).padStart(2,"0"),
+                        note: "Enquiries, not confirmed bookings",
                       },
                     ]
                   : [
                       {
                         label: "Your request",
                         value: "01",
-                        note: "Study permit support",
+                        note: client.service,
                       },
                       {
                         label: "Preparation stage",
                         value: client.status,
-                        note: "Sample consultant update",
+                        note: "Latest saved status",
                       },
                       {
                         label: "Your next arrival",
-                        value: "18 Jan",
-                        note: "Sample date · 2027",
+                        value: "To confirm",
+                        note: "No transfer booking confirmed",
                       },
                       {
                         label: "Documents",
-                        value: "03",
-                        note: "Illustrative checklist",
+                        value: "Checklist",
+                        note: "Requirements confirmed after review",
                       },
                     ]
                 ).map((m) => (
@@ -301,11 +268,11 @@ export function Portal({ admin = false }: { admin?: boolean }) {
                   </div>
                   <RequestsTable rows={records} admin={admin} update={update} />
                   <div className="portal-two">
-                    <div className="portal-card">
+                    <Card className="portal-card">
                       <span className="card-eyebrow">TODAY’S PRIORITY</span>
                       <h2>Review a document.</h2>
                       <p>
-                        Sample client A has a document waiting for review. Keep
+                        An example enquiry has a preparation item waiting for review. Keep
                         the next step clear.
                       </p>
                       <Button
@@ -314,18 +281,25 @@ export function Portal({ admin = false }: { admin?: boolean }) {
                       >
                         Open document queue <ArrowRight size={15} />
                       </Button>
-                    </div>
+                    </Card>
                     <div className="portal-card dark-portal-card">
                       <span className="card-eyebrow">ARRIVAL DESK</span>
                       <h2>One transfer to coordinate.</h2>
                       <p>
-                        Confirm the pick-up details and assign a sample driver
-                        for the interface demo.
+                        Confirm the pick-up details and assign an example driver
+                for this example enquiry.
                       </p>
                       <Button onClick={() => setTab("Transfers")}>
                         Open dispatch <ArrowRight size={15} />
                       </Button>
                     </div>
+                  </div>
+                  <div className="portal-card journey-messages">
+                    <div className="portal-card-top"><div><span className="card-eyebrow">ENQUIRY / {client.id}</span><h2>Message thread</h2></div><span className="status-pill">Same browser only</span></div>
+                    <p>Replies stay on this device and are not sent to the traveller. Do not enter passport or medical details.</p>
+                    {thread.length>0?<div className="journey-thread">{thread.map((message)=><div className={`journey-message ${message.author}`} key={message.id}><b>{message.author==="agency"?"Agency workspace":"Traveller · example thread"}</b><p>{message.text}</p><small>{new Date(message.at).toLocaleString()}</small></div>)}</div>:<p className="helper-text">No messages yet for this example enquiry.</p>}
+                    <label className="message-compose"><span>Message</span><textarea value={messageText} maxLength={1200} onChange={(event)=>setMessageText(event.target.value)} placeholder="Write a reply" /></label>
+                    <Button onClick={sendMessage} disabled={!messageText.trim()}>Save reply</Button>
                   </div>
                 </>
               ) : (
@@ -336,14 +310,16 @@ export function Portal({ admin = false }: { admin?: boolean }) {
                         <span className="card-eyebrow">
                           YOUR APPLICATION / {client.id}
                         </span>
-                        <span className="status-pill">{client.status}</span>
+                        <Badge tone={badgeTone(client.status)}>
+                          {client.status}
+                        </Badge>
                       </div>
                       <h2>{client.service}</h2>
                       <p>
-                        Your sample request and the latest saved review status.
+                        Your enquiry and its latest saved review status.
                       </p>
                       <div className="application-timeline">
-                        {stages.map((s, i) => (
+                        {journeyStages.map((s, i) => (
                           <div className={i <= stage ? "done" : ""} key={s}>
                             <b>{i < stage ? <Check size={14} /> : i + 1}</b>
                             <span>{s}</span>
@@ -371,6 +347,7 @@ export function Portal({ admin = false }: { admin?: boolean }) {
                           confirmed for your application.
                         </p>
                       </div>
+                      <div className="portal-next"><b>What happens next</b><p>{client.status==="Documents needed"?"The agency needs additional information. Check the document preparation notes before sharing anything sensitive.":client.status==="Submitted to authority"?"Your file is with the relevant authority. Processing times depend on that authority; no action is needed unless the agency contacts you.":client.status==="Decision recorded"?"The agency will explain the decision and any next steps once it is confirmed.":"The agency will review your enquiry and confirm the requirements and service quote. No government application has been submitted."}</p></div>
                     </div>
                     <div className="portal-card arrival-card">
                       <div className="arrival-map">
@@ -380,7 +357,7 @@ export function Portal({ admin = false }: { admin?: boolean }) {
                         <small>AIRPORT</small>
                         <b>WINDHOEK</b>
                       </div>
-                      <span className="card-eyebrow">SAMPLE ARRIVAL</span>
+                      <span className="card-eyebrow">EXAMPLE ARRIVAL</span>
                       <h2>Your first ride.</h2>
                       <p>
                         Hosea Kutako Airport to Windhoek.
@@ -398,6 +375,13 @@ export function Portal({ admin = false }: { admin?: boolean }) {
                   <div className="portal-section-head">
                     <h2>Next practical steps</h2>
                   </div>
+                  <div className="portal-card journey-messages">
+                    <div className="portal-card-top"><div><span className="card-eyebrow">YOUR JOURNEY</span><h2>Messages</h2></div><span className="status-pill">Saved on this device</span></div>
+                    <p>Keep notes about this enquiry together. Messages are visible only in this browser and are not sent to the agency. Do not include passport numbers or medical details.</p>
+                    {thread.length>0?<div className="journey-thread">{thread.map((message)=><div className={`journey-message ${message.author}`} key={message.id}><b>{message.author==="agency"?"Agency workspace":"You · example thread"}</b><p>{message.text}</p><small>{new Date(message.at).toLocaleString()}</small></div>)}</div>:<p className="helper-text">No messages yet. You can leave a note for this example journey.</p>}
+                    <label className="message-compose"><span>Message</span><textarea value={messageText} maxLength={1200} onChange={(event)=>setMessageText(event.target.value)} placeholder="Write a note about your enquiry" /></label>
+                    <Button onClick={sendMessage} disabled={!messageText.trim()}>Save message</Button>
+                  </div>
                   <div className="next-step-grid">
                     <button onClick={() => setTab("Documents")}>
                       <FolderOpen size={24} />
@@ -410,8 +394,8 @@ export function Portal({ admin = false }: { admin?: boolean }) {
                     <button onClick={() => setTab("Payments")}>
                       <CreditCard size={24} />
                       <div>
-                        <b>View sample invoice</b>
-                        <span>Understand the planned payment view.</span>
+                        <b>Review quotation status</b>
+                        <span>No fee or payment is due in this prototype.</span>
                       </div>
                       <ArrowUpRight size={19} />
                     </button>
@@ -460,68 +444,33 @@ export function Portal({ admin = false }: { admin?: boolean }) {
             <div className="portal-card">
               <div className="portal-card-top">
                 <div>
-                  <span className="card-eyebrow">DOCUMENT VAULT PREVIEW</span>
-                  <h2>{admin ? "Review queue" : "Preparation documents"}</h2>
+                  <span className="card-eyebrow">DOCUMENT PREPARATION</span>
+                  <h2>{admin ? "Review queue" : "Your selected documents"}</h2>
                 </div>
-                <span className="status-pill">Names only · no real files</span>
+                <span className="status-pill">Filenames only</span>
               </div>
-              <p>
-                These fictional records show the verification workflow. No
-                passport or medical record has been uploaded.
-              </p>
-              {[
-                "Sample passport.pdf",
-                "Sample enrolment letter.pdf",
-                "Sample funding details.pdf",
-              ].map((f, i) => (
-                <div className="vault-row" key={f}>
-                  <span className="vault-icon">
-                    <FileText size={20} />
-                  </span>
-                  <div>
-                    <b>{f}</b>
-                    <span>DEMO-001 · sample record</span>
+              <p>Selected filenames are saved in this browser. File contents are not uploaded or stored.</p>
+              {(() => {
+                const documentRows = (admin ? records : [client]).flatMap((record) =>
+                  (record.enquiry?.documents || []).map((name) => ({ name, reference: record.id })),
+                );
+                return documentRows.length ? documentRows.map(({ name, reference }) => (
+                  <div className="vault-row" key={`${reference}-${name}`}>
+                    <span className="vault-icon"><FileText size={20} /></span>
+                    <div><b>{name}</b><span>{reference} · filename only</span></div>
+                    {admin ? <select aria-label={`Review status for ${name}`} value={docStatus} onChange={(event) => void saveWorkspace("document", event.target.value)}><option>Awaiting review</option><option>Verified</option><option>Needs correction</option></select> : <span className="status-pill">Not uploaded</span>}
                   </div>
-                  <span className="status-pill">
-                    {i === 0 ? docStatus : "Preparation item"}
-                  </span>
-                  {admin ? (
-                    <select
-                      aria-label={`Verification status for ${f}`}
-                      onChange={(e) =>
-                        void saveWorkspace("document", e.target.value)
-                      }
-                    >
-                      <option>Awaiting review</option>
-                      <option>Verified</option>
-                      <option>Needs correction</option>
-                    </select>
-                  ) : (
-                    <button
-                      onClick={() =>
-                        setNotice(
-                          "This sample record has no downloadable document.",
-                        )
-                      }
-                      aria-label={`View ${f}`}
-                    >
-                      <ArrowUpRight size={17} />
-                    </button>
-                  )}
-                </div>
-              ))}
-              <div className="portal-note">
-                Production documents will require protected access, confirmed
-                retention rules and a secure upload service.
-              </div>
+                )) : <EmptyState title="No filenames selected" description="This prototype does not upload or store file contents. A secure sharing option must be arranged before sending real documents." />;
+              })()}
+              <div className="portal-note">Do not enter passport or medical records in this prototype. Production document sharing requires protected access and a confirmed retention policy.</div>
             </div>
           )}
           {tab === "Transfers" && (
             <div className="portal-two">
               <div className="portal-card">
-                <span className="card-eyebrow">TRANSFER / DEMO-T01</span>
+                <span className="card-eyebrow">TRAVEL ARRANGEMENTS / EXAMPLE</span>
                 <h2>Airport to your first stay.</h2>
-                <p>Illustrative booking details for the client demo.</p>
+                <p>Example details only. No transfer has been booked.</p>
                 <dl className="transfer-dl">
                   <div>
                     <dt>Pick-up</dt>
@@ -529,7 +478,7 @@ export function Portal({ admin = false }: { admin?: boolean }) {
                   </div>
                   <div>
                     <dt>Drop-off</dt>
-                    <dd>Sample stay · Windhoek</dd>
+                    <dd>Example stay · Windhoek</dd>
                   </div>
                   <div>
                     <dt>Date & time</dt>
@@ -537,7 +486,7 @@ export function Portal({ admin = false }: { admin?: boolean }) {
                   </div>
                   <div>
                     <dt>Flight</dt>
-                    <dd>Sample flight · to confirm</dd>
+                    <dd>Example flight · to confirm</dd>
                   </div>
                   <div>
                     <dt>Passengers</dt>
@@ -550,7 +499,7 @@ export function Portal({ admin = false }: { admin?: boolean }) {
                 </dl>
                 {admin ? (
                   <label className="dispatch-label">
-                    Assign sample driver
+                    Assign example driver
                     <select
                       value={driver}
                       onChange={(e) =>
@@ -558,8 +507,8 @@ export function Portal({ admin = false }: { admin?: boolean }) {
                       }
                     >
                       <option>Not assigned</option>
-                      <option>Sample driver A · vehicle DEMO-01</option>
-                      <option>Sample driver B · vehicle DEMO-02</option>
+                      <option>Example driver A · example vehicle</option>
+                      <option>Example driver B · example vehicle</option>
                     </select>
                   </label>
                 ) : (
@@ -577,7 +526,7 @@ export function Portal({ admin = false }: { admin?: boolean }) {
                   <small>AIRPORT</small>
                   <b>WINDHOEK</b>
                 </div>
-                <h2>Arrival route preview</h2>
+                <h2>Arrival route</h2>
                 <p>
                   This illustration shows the planned route view. It is not live
                   driver tracking.
@@ -596,101 +545,34 @@ export function Portal({ admin = false }: { admin?: boolean }) {
           {tab === "Payments" && (
             <>
               <div className="portal-card">
-                <span className="card-eyebrow">PAYMENTS PREVIEW</span>
+                <span className="card-eyebrow">PAYMENT INFORMATION</span>
                 <h2>
                   {admin
-                    ? "Sample payment activity"
-                    : "Invoices & service fees"}
+                    ? "Payment overview"
+                        : "Quotations & service fees"}
                 </h2>
                 <p>
-                  Illustrative amounts only. No payment processor is connected.
+                  No quote, invoice or payment is available yet. Agency, government and supplier charges are confirmed separately before any booking.
                 </p>
-                <div className="table-scroll">
-                  <table className="portal-table">
-                    <thead>
-                      <tr>
-                        <th>Invoice</th>
-                        <th>Service</th>
-                        <th>Sample fee</th>
-                        <th>Status</th>
-                        <th />
+                <Table>
+                  <thead><tr><th>Enquiry</th><th>Service</th><th>Agency fee</th><th>Quote status</th></tr></thead>
+                  <tbody>
+                    {(admin ? records : [client]).map((record) => (
+                      <tr key={record.id}>
+                        <td>{record.id}</td>
+                        <td>{record.service}</td>
+                        <td>{record.amount ? `N$${record.amount.toLocaleString()}` : "To be quoted"}</td>
+                        <td><span className="status-pill">{record.amount ? "Awaiting confirmation" : "Awaiting quotation"}</span></td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {(admin ? records : [client]).map((r) => (
-                        <tr key={r.id}>
-                          <td>INV-{r.id}</td>
-                          <td>{r.service}</td>
-                          <td>
-                            {r.amount
-                              ? `N$${r.amount.toLocaleString()}`
-                              : "To quote"}
-                          </td>
-                          <td>
-                            <span className="status-pill">
-                              {r.amount
-                                ? "Sample · unpaid"
-                                : "Awaiting quotation"}
-                            </span>
-                          </td>
-                          <td>
-                            <button
-                              disabled={!r.amount}
-                              onClick={() => setInvoice(true)}
-                            >
-                              View <ArrowUpRight size={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </Table>
               </div>
-              {invoice && (
-                <div className="portal-card invoice-card">
-                  <div className="portal-card-top">
-                    <h2>Sample invoice</h2>
-                    <button
-                      onClick={() => setInvoice(false)}
-                      aria-label="Close invoice"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-                  <span className="demo-pill">NOT PAYABLE · UI SAMPLE</span>
-                  <dl className="transfer-dl">
-                    <div>
-                      <dt>Reference</dt>
-                      <dd>INV-DEMO-001</dd>
-                    </div>
-                    <div>
-                      <dt>Client</dt>
-                      <dd>Sample client A</dd>
-                    </div>
-                    <div>
-                      <dt>Illustrative service fee</dt>
-                      <dd>N$2,400</dd>
-                    </div>
-                    <div>
-                      <dt>Government & supplier fees</dt>
-                      <dd>Excluded · to confirm</dd>
-                    </div>
-                  </dl>
-                  <Button
-                    className="outline-button"
-                    onClick={() => window.print()}
-                  >
-                    <Download size={15} />
-                    Print sample invoice
-                  </Button>
-                </div>
-              )}
+
             </>
           )}
           <footer className="portal-footer">
-            Sample workspace · No real applications, payments or sensitive
-            documents.<span>Welcome Namibia Services</span>
+            Example records are saved only in this browser. No requests, payments or notifications are sent.<span>Arrival Namibia</span>
           </footer>
         </main>
       </div>
@@ -702,14 +584,14 @@ function RequestsTable({
   admin,
   update,
 }: {
-  rows: DemoApplication[];
+  rows: ApplicationRecord[];
   admin: boolean;
   update: (id: string, status: string) => void;
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
+  if (!rows.length) return <EmptyState title="No matching enquiries" description="Try another status or search term. New enquiries saved in this browser will appear here." />;
   return (
-    <div className="table-scroll">
-      <table className="portal-table">
+    <Table>
         <thead>
           <tr>
             <th>Reference</th>
@@ -743,7 +625,7 @@ function RequestsTable({
                 <td>{r.service}</td>
                 <td>{r.date}</td>
                 <td>
-                  <span className="status-pill">{r.status}</span>
+                  <Badge tone={badgeTone(r.status)}>{r.status}</Badge>
                 </td>
                 {admin && (
                   <td>
@@ -816,13 +698,7 @@ function RequestsTable({
               )}
             </Fragment>
           ))}
-          {!rows.length && (
-            <tr>
-              <td colSpan={admin ? 6 : 4}>No matching sample requests.</td>
-            </tr>
-          )}
         </tbody>
-      </table>
-    </div>
+      </Table>
   );
 }

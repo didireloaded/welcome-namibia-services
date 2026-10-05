@@ -1,5 +1,5 @@
-import { LandingPage } from "@/components/marketing/landing-page";
+import { PackagesOverview } from "@/components/marketing/package-pages";
 
 export default function PackagesPage() {
-  return <LandingPage view="packages" />;
+  return <PackagesOverview />;
 }

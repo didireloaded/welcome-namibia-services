@@ -33,7 +33,7 @@ export function PageFrame({
   const start = () => setRequest({ service });
   return (
     <EnquiryContext.Provider value={start}>
-      <div className="site-shell interior-shell">
+      <div className="site-shell interior-shell public-frame">
         <SiteHeader onStart={start} />
         <main className="interior-content">{children}</main>
         <SiteFooter onConsult={start} />
