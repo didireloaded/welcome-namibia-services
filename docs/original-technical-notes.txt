@@ -1,0 +1,449 @@
+🏗️ The Senior-Level Tech Stack
+Framework: Next.js 14+ (App Router) — SSR for SEO, Server Actions for secure mutations.
+
+Language: TypeScript — Strict mode.
+
+Styling: Tailwind CSS + shadcn/ui (Radix UI primitives) — Accessible, high-performance, and perfectly suited for the complex layout in your image.
+
+Database: PostgreSQL + Prisma ORM — Relational integrity for complex visa/booking workflows.
+
+Auth: NextAuth.js (Auth.js) v5 — JWT strategy, secure session management.
+
+File Uploads: UploadThing or AWS S3 SDK — For secure document handling (passports, medical records).
+
+Form Validation: React Hook Form + Zod — Client and server-side schema validation.
+
+Animation: Framer Motion — For the smooth carousel and tab transitions in your image.
+
+📁 1. Project Architecture (Directory Structure)
+A senior dev structures by feature, not just file type.
+
+text
+/src
+ ├── /app
+ │   ├── (auth)/login/page.tsx
+ │   ├── (dashboard)/
+ │   │   ├── client/page.tsx       # Client portal (track visa, transfers)
+ │   │   └── admin/page.tsx        # Agency admin portal
+ │   ├── (marketing)/
+ │   │   ├── page.tsx              # The UI from your image
+ │   │   └── services/[slug]/page.tsx
+ │   └── api/
+ │       ├── auth/[...nextauth]/route.ts
+ │       └── upload/route.ts
+ ├── /components
+ │   ├── /ui                       # shadcn primitives (Button, Tabs, Card)
+ │   ├── /marketing                # Hero, Pricing, HowToBook
+ │   └── /dashboard                # VisaTracker, TransferStatus
+ ├── /lib
+ │   ├── db.ts                     # Prisma singleton
+ │   ├── auth.ts                   # NextAuth config
+ │   └── validators.ts             # Zod schemas
+ ├── /prisma
+ │   └── schema.prisma
+ └── /types
+     └── index.ts
+🗄️ 2. Database Schema (Prisma)
+This schema handles the full lifecycle of a client's journey: visa application, airport transfer, medical assistance, and hotel booking.
+
+prisma
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  firstName     String
+  lastName      String
+  phone         String?
+  nationality   String
+  role          Role      @default(CLIENT)
+  applications  VisaApplication[]
+  transfers     TransferBooking[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum Role {
+  CLIENT
+  ADMIN
+  CONSULTANT
+}
+
+model VisaApplication {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  visaType      VisaType
+  status        AppStatus @default(DRAFT)
+  documents     Document[]
+  notes         String?
+  submittedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum VisaType {
+  WORK_PERMIT
+  STUDY_PERMIT
+  TOURIST_VISA
+  MEDICAL_VISA
+}
+
+enum AppStatus {
+  DRAFT
+  PENDING_REVIEW
+  SUBMITTED_TO_EMBASSY
+  APPROVED
+  REJECTED
+}
+
+model TransferBooking {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  pickupDate    DateTime
+  flightNumber  String
+  pickupLocation String   // Airport
+  dropoffLocation String  // Hotel/Hospital
+  passengers    Int
+  vehicleType   String    // Economy, Business, VIP
+  status        TransferStatus @default(PENDING)
+  createdAt     DateTime  @default(now())
+}
+
+enum TransferStatus {
+  PENDING
+  CONFIRMED
+  DRIVER_ASSIGNED
+  COMPLETED
+  CANCELLED
+}
+
+model Document {
+  id            String    @id @default(cuid())
+  applicationId String
+  application   VisaApplication @relation(fields: [applicationId], references: [id])
+  fileName      String
+  fileUrl       String
+  fileType      String
+  uploadedAt    DateTime  @default(now())
+}
+🎨 3. The Frontend Implementation (The UI from your Image)
+Here is how a senior dev translates that specific image into clean, typed React components using Tailwind and Framer Motion.
+
+A. The Hero Section (Top Area)
+Matches the "Unforgettable Mount Bromo Sunrise Tour" section.
+
+tsx
+// components/marketing/Hero.tsx
+"use client";
+
+import { motion } from "framer-motion";
+import { ArrowUpRight, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+export const Hero = () => {
+  return (
+    <section className="relative w-full h-[90vh] min-h-[600px] flex items-center overflow-hidden">
+      {/* Background Image with Overlay */}
+      <div className="absolute inset-0 z-0">
+        <img 
+          src="/images/hero-bg.jpg" 
+          alt="Travel Agency Background" 
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+      </div>
+
+      {/* Content */}
+      <div className="container relative z-10 mx-auto px-6 md:px-12 flex flex-col justify-center h-full pt-20">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="max-w-2xl"
+        >
+          <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md text-white text-sm font-medium mb-6 border border-white/20">
+            Experience Seamless Travel
+          </span>
+          <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight mb-6">
+            Unforgettable Journeys, <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-500">
+              Flawless Logistics
+            </span>
+          </h1>
+          <p className="text-lg text-gray-300 mb-8 max-w-lg">
+            From visa processing and airport transfers to medical assistance and luxury vacations. We handle the paperwork, you enjoy the journey.
+          </p>
+          
+          <div className="flex items-center gap-6">
+            <Button size="lg" className="rounded-full bg-white text-black hover:bg-gray-200 font-semibold px-8">
+              Start Your Application <ArrowUpRight className="ml-2 h-4 w-4" />
+            </Button>
+            <div className="flex items-center gap-3 text-white">
+              <div className="flex -space-x-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="w-10 h-10 rounded-full border-2 border-black bg-gray-400 overflow-hidden">
+                    <img src={`https://i.pravatar.cc/100?img=${i}`} alt="User" />
+                  </div>
+                ))}
+              </div>
+              <div className="text-sm">
+                <p className="font-bold">2,500+</p>
+                <p className="text-gray-400">Clients Assisted</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+      
+      {/* Floating Carousel Indicator (Bottom Right like the image) */}
+      <div className="absolute bottom-10 right-10 z-10 hidden lg:flex items-center gap-4 text-white">
+        <span className="text-4xl font-light">01</span>
+        <div className="w-24 h-[2px] bg-white/30 relative">
+          <div className="absolute top-0 left-0 h-full w-1/4 bg-white" />
+        </div>
+        <span className="text-white/50">05</span>
+      </div>
+    </section>
+  );
+};
+B. The Tabbed Services Section
+Matches the "Our Tour Package Ensures A Seamless..." section.
+
+tsx
+// components/marketing/ServiceTabs.tsx
+"use client";
+
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowUpRight } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+
+const services = [
+  {
+    id: "visa",
+    label: "Visa & Permits",
+    items: [
+      { title: "Work Permits", desc: "Full application and embassy submission.", img: "/images/work.jpg" },
+      { title: "Study Permits", desc: "Student visa processing and documentation.", img: "/images/study.jpg" },
+      { title: "Tourist Visas", desc: "Fast-track tourist visa assistance.", img: "/images/tourist.jpg" },
+    ]
+  },
+  {
+    id: "transfers",
+    label: "Airport Transfers",
+    items: [
+      { title: "VIP Chauffeur", desc: "Luxury pickup from the airport to your hotel.", img: "/images/vip.jpg" },
+      { title: "Group Shuttle", desc: "Economical transfers for groups and families.", img: "/images/group.jpg" },
+      { title: "Medical Transport", desc: "Specialized transport for medical patients.", img: "/images/medical.jpg" },
+    ]
+  },
+  // Add Medical & Vacation tabs here
+];
+
+export const ServiceTabs = () => {
+  return (
+    <section className="py-24 bg-white">
+      <div className="container mx-auto px-6 md:px-12">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <span className="text-sm font-semibold text-amber-600 tracking-wider uppercase">Our Services</span>
+          <h2 className="text-4xl font-bold text-gray-900 mt-2 mb-4">
+            Everything You Need For A Seamless Journey
+          </h2>
+        </div>
+
+        <Tabs defaultValue="visa" className="w-full">
+          <div className="flex justify-center mb-10">
+            <TabsList className="bg-gray-100 p-1 rounded-full">
+              {services.map((s) => (
+                <TabsTrigger 
+                  key={s.id} 
+                  value={s.id}
+                  className="rounded-full px-6 py-2.5 data-[state=active]:bg-black data-[state=active]:text-white transition-all"
+                >
+                  {s.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+
+          {services.map((s) => (
+            <TabsContent key={s.id} value={s.id} className="mt-0">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <AnimatePresence mode="wait">
+                  {s.items.map((item, idx) => (
+                    <motion.div
+                      key={item.title}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                    >
+                      <Card className="group overflow-hidden border-none shadow-lg hover:shadow-xl transition-all duration-300 rounded-3xl">
+                        <div className="relative h-64 overflow-hidden">
+                          <img 
+                            src={item.img} 
+                            alt={item.title} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                          <ArrowUpRight className="absolute top-4 right-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                        <CardContent className="p-6">
+                          <h3 className="text-xl font-bold mb-2">{item.title}</h3>
+                          <p className="text-gray-500 text-sm">{item.desc}</p>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
+    </section>
+  );
+};
+C. The Pricing / Packages Section
+Matches the dark geometric cards section.
+
+tsx
+// components/marketing/Pricing.tsx
+import { CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+const packages = [
+  {
+    name: "Basic Assistance",
+    price: "Contact Us",
+    features: ["Document Checklist", "Application Review", "Email Support"],
+    highlight: false,
+  },
+  {
+    name: "Standard Package",
+    price: "Contact Us",
+    features: ["Everything in Basic", "Embassy Submission", "Airport Pickup", "Hotel Booking"],
+    highlight: true,
+  },
+  {
+    name: "VIP Concierge",
+    price: "Contact Us",
+    features: ["Everything in Standard", "Medical Escort", "Expedited Processing", "24/7 Dedicated Agent"],
+    highlight: false,
+  },
+];
+
+export const Pricing = () => {
+  return (
+    <section className="py-24 bg-gray-950 text-white">
+      <div className="container mx-auto px-6 md:px-12">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-bold mb-4">Choose Your Perfect Package</h2>
+          <p className="text-gray-400 max-w-xl mx-auto">
+            Transparent pricing for complex logistics. We handle the paperwork so you can focus on your journey.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {packages.map((pkg) => (
+            <div 
+              key={pkg.name}
+              className={`relative p-8 rounded-2xl border ${
+                pkg.highlight 
+                  ? "bg-white text-black border-white scale-105 shadow-2xl" 
+                  : "bg-gray-900 border-gray-800 text-white"
+              }`}
+            >
+              {pkg.highlight && (
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-500 text-black text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                  Most Popular
+                </div>
+              )}
+              <h3 className="text-2xl font-bold mb-2">{pkg.name}</h3>
+              <div className="text-4xl font-light mb-6">{pkg.price}</div>
+              <ul className="space-y-4 mb-8">
+                {pkg.features.map((f) => (
+                  <li key={f} className="flex items-center gap-3">
+                    <CheckCircle2 className={`h-5 w-5 ${pkg.highlight ? "text-amber-500" : "text-gray-500"}`} />
+                    <span className="text-sm">{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button 
+                className={`w-full rounded-full py-6 ${
+                  pkg.highlight 
+                    ? "bg-black text-white hover:bg-gray-800" 
+                    : "bg-white text-black hover:bg-gray-200"
+                }`}
+              >
+                Get Started
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+⚙️ 4. Backend Logic (Senior-Level Server Actions)
+Instead of messy API routes, we use Next.js Server Actions with Zod validation.
+
+typescript
+// app/actions/visa.ts
+"use server";
+
+import { z } from "zod";
+import { db } from "@/lib/db";
+import { auth } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
+
+const visaApplicationSchema = z.object({
+  visaType: z.enum(["WORK_PERMIT", "STUDY_PERMIT", "TOURIST_VISA", "MEDICAL_VISA"]),
+  nationality: z.string().min(2),
+  notes: z.string().optional(),
+});
+
+export async function submitVisaApplication(formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { error: "Unauthorized" };
+  }
+
+  const validatedFields = visaApplicationSchema.safeParse({
+    visaType: formData.get("visaType"),
+    nationality: formData.get("nationality"),
+    notes: formData.get("notes"),
+  });
+
+  if (!validatedFields.success) {
+    return { error: "Invalid fields" };
+  }
+
+  try {
+    const application = await db.visaApplication.create({
+      data: {
+        userId: session.user.id,
+        visaType: validatedFields.data.visaType,
+        status: "PENDING_REVIEW",
+        notes: validatedFields.data.notes,
+      },
+    });
+
+    revalidatePath("/dashboard/client");
+    return { success: true, applicationId: application.id };
+  } catch (error) {
+    console.error("Visa application error:", error);
+    return { error: "Failed to submit application. Please try again." };
+  }
+}

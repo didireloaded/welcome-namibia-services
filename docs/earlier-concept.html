@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173c35">
+  <meta name="description" content="A concept for a Namibia arrival support service, covering paperwork, airport transfers and stays.">
+  <title>Arrival Namibia | Website concept</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+    :root { --ink:#172a27; --green:#173c35; --deep:#0f2c28; --cream:#f7f5ef; --paper:#fffefa; --muted:#65736e; --line:#d8dfd8; --lime:#e2eec4; --rust:#ba6b49; --radius:18px; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; color:var(--ink); background:var(--cream); font-family:'DM Sans',sans-serif; line-height:1.55; }
+    button,input,select { font:inherit; }
+    a { color:inherit; text-decoration:none; }
+    button { cursor:pointer; }
+    .wrap { max-width:1320px; margin:auto; padding:0 50px; }
+    .concept { padding:8px 20px; background:#e9e9dc; color:#4d5c55; text-align:center; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+    .top { background:var(--paper); border-bottom:1px solid var(--line); position:relative; z-index:10; }
+    .nav { height:82px; display:flex; align-items:center; justify-content:space-between; gap:32px; }
+    .brand { display:flex; align-items:center; gap:12px; white-space:nowrap; }
+    .brandmark { height:42px; width:42px; border:2px solid var(--green); border-radius:50%; display:grid; place-items:center; color:var(--green); font-family:Manrope,sans-serif; font-size:23px; font-weight:800; letter-spacing:-.12em; padding-right:3px; }
+    .brandtext { display:flex; flex-direction:column; font-family:Manrope,sans-serif; font-weight:800; font-size:17px; letter-spacing:-.055em; line-height:1.04; }
+    .brandtext small { font-family:'DM Sans',sans-serif; font-size:9px; font-weight:700; letter-spacing:.24em; text-transform:uppercase; margin-top:5px; color:#64736e; }
+    .navlinks { display:flex; align-items:center; gap:32px; font-size:13px; font-weight:700; }
+    .navlinks a:not(.navcta):hover { color:#7a907c; }
+    .navcta,.btn { display:inline-flex; align-items:center; justify-content:center; gap:12px; border-radius:50px; background:var(--lime); color:var(--deep); padding:14px 21px; font-size:13px; font-weight:700; border:1px solid transparent; transition:transform .2s,background .2s; }
+    .navcta:hover,.btn:hover { transform:translateY(-2px); background:#d5e7ad; }
+    .menu { display:none; border:1px solid var(--line); background:transparent; border-radius:50%; width:42px; height:42px; color:var(--green); font-size:22px; }
+    .hero { background:var(--green); color:var(--paper); position:relative; overflow:hidden; }
+    .hero::after { content:''; position:absolute; width:780px; height:780px; border:1px solid rgba(235,246,223,.10); border-radius:50%; right:-240px; top:-240px; pointer-events:none; box-shadow:0 0 0 120px rgba(240,250,230,.025),0 0 0 240px rgba(240,250,230,.018); }
+    .hero-grid { min-height:610px; display:grid; grid-template-columns:1.06fr .94fr; gap:50px; align-items:center; padding-top:80px; padding-bottom:90px; position:relative; z-index:1; }
+    .eyebrow { display:flex; align-items:center; gap:12px; color:var(--lime); font-size:11px; letter-spacing:.17em; text-transform:uppercase; font-weight:700; }
+    .eyebrow::before { content:''; height:1px; width:26px; background:currentColor; }
+    h1,h2,h3,p { margin-top:0; }
+    h1,h2,h3 { font-family:Manrope,sans-serif; letter-spacing:-.06em; }
+    h1 { font-size:clamp(58px,6.1vw,91px); line-height:1.08; margin:30px 0 24px; font-weight:700; max-width:720px; }
+    h1 em { color:var(--lime); font-style:normal; }
+    .intro { color:#d6e0d8; max-width:550px; font-size:17px; line-height:1.75; }
+    .hero-actions { display:flex; align-items:center; gap:25px; margin-top:35px; flex-wrap:wrap; }
+    .textlink { font-size:13px; font-weight:700; border-bottom:1px solid rgba(255,255,255,.55); padding-bottom:5px; }
+    .route { width:100%; max-width:520px; margin-left:auto; position:relative; padding:25px 0 0 35px; }
+    .route-line { position:absolute; left:66px; top:65px; bottom:92px; width:1px; background:repeating-linear-gradient(to bottom,#89af9f 0 8px,transparent 8px 18px); }
+    .route-caption { text-transform:uppercase; letter-spacing:.15em; font-size:11px; color:#acc9b9; margin:0 0 20px 44px; }
+    .stop { display:flex; gap:25px; align-items:flex-start; position:relative; margin:0 0 14px; }
+    .stop-num { flex:none; width:63px; height:63px; border:1px solid #6a9684; border-radius:50%; display:grid; place-items:center; font-size:12px; color:var(--lime); background:var(--green); z-index:1; }
+    .stop-card { flex:1; border:1px solid rgba(229,243,228,.25); background:rgba(245,255,243,.055); border-radius:13px; padding:19px 22px; min-height:91px; backdrop-filter:blur(5px); }
+    .stop-card b { display:block; font-family:Manrope,sans-serif; font-size:16px; letter-spacing:-.03em; }
+    .stop-card small { display:block; margin-top:4px; color:#b8d0c2; line-height:1.45; font-size:12px; }
+    .stop:last-of-type .stop-card { background:#e0edc8; border-color:#e0edc8; color:var(--deep); }
+    .stop:last-of-type .stop-card small { color:#4d6358; }
+    .route-end { margin:15px 0 0 88px; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#acc9b9; }
+    .band { background:#e7ede1; border-bottom:1px solid #d3ddcf; }
+    .band-inner { display:flex; align-items:center; justify-content:space-between; gap:25px; min-height:76px; color:#536a5d; font-size:12px; }
+    .band-inner b { color:var(--deep); font-size:13px; }
+    .section { padding:105px 0; }
+    .section-head { display:flex; justify-content:space-between; align-items:end; gap:35px; margin-bottom:42px; }
+    .kicker { color:var(--rust); font-size:11px; font-weight:700; letter-spacing:.17em; text-transform:uppercase; margin-bottom:16px; }
+    h2 { font-size:clamp(37px,4vw,55px); line-height:1.15; font-weight:700; margin-bottom:0; }
+    .section-head p { max-width:400px; color:var(--muted); margin:0; font-size:15px; }
+    .journey-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:13px; }
+    .journey { min-height:290px; border:1px solid var(--line); text-align:left; border-radius:var(--radius); background:var(--paper); color:var(--ink); padding:25px; display:flex; flex-direction:column; transition:background .2s,transform .2s,border-color .2s; }
+    .journey:hover { transform:translateY(-3px); border-color:#a5b7ac; }
+    .journey[aria-pressed=true] { background:var(--green); border-color:var(--green); color:#fff; }
+    .j-num { font-size:11px; letter-spacing:.15em; color:#94a59a; }
+    .journey[aria-pressed=true] .j-num,.journey[aria-pressed=true] .j-desc { color:#c3d6c7; }
+    .j-title { font-family:Manrope,sans-serif; font-size:23px; letter-spacing:-.05em; font-weight:700; line-height:1.15; margin-top:auto; margin-bottom:11px; }
+    .j-desc { color:var(--muted); font-size:13px; line-height:1.5; }
+    .j-arrow { font-size:23px; align-self:flex-end; line-height:1; margin-top:12px; }
+    .journey-detail { margin-top:14px; background:#ecf1e8; border:1px solid #d8e1d4; border-radius:var(--radius); padding:31px 36px; display:grid; grid-template-columns:.8fr 1.2fr; gap:50px; }
+    .journey-detail .tag { color:#728b77; font-size:11px; letter-spacing:.16em; text-transform:uppercase; font-weight:700; }
+    .journey-detail h3 { font-size:25px; margin:10px 0; }
+    .journey-detail p { color:#61746a; font-size:13px; margin:0; }
+    .detail-list { display:grid; grid-template-columns:1fr 1fr; gap:10px 30px; align-content:center; }
+    .detail-list span { border-bottom:1px solid #c8d5c9; padding:10px 0; font-size:13px; font-weight:600; }
+    .services { background:#fffefa; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+    .service-grid { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid var(--line); }
+    .service { padding:33px 35px 30px 0; border-right:1px solid var(--line); }
+    .service:not(:first-child) { padding-left:35px; }
+    .service:last-child { border:0; }
+    .service .number { color:#a9b8aa; font-size:12px; letter-spacing:.1em; }
+    .service h3 { font-size:25px; margin:45px 0 11px; }
+    .service p { font-size:14px; color:var(--muted); min-height:68px; }
+    .service ul { list-style:none; padding:0; margin:22px 0 0; font-size:12px; line-height:2.4; }
+    .service li::before { content:'↗'; color:var(--rust); margin-right:10px; }
+    .process { background:#e8eee4; }
+    .steps { display:grid; grid-template-columns:repeat(4,1fr); gap:0; border-top:1px solid #cdd9cb; margin-top:44px; }
+    .step { padding:30px 30px 0 0; }
+    .step .step-num { font-size:12px; color:#809589; }
+    .step h3 { margin:55px 0 10px; font-size:21px; }
+    .step p { color:#607368; font-size:13px; padding-right:15px; }
+    .step:not(:last-child) { border-right:1px solid #cdd9cb; margin-right:25px; }
+    .enquire { background:var(--deep); color:#fff; }
+    .enquire-grid { display:grid; grid-template-columns:.8fr 1.2fr; gap:100px; align-items:start; }
+    .enquire h2 { margin:0 0 22px; }
+    .enquire p { color:#bacdc0; font-size:15px; }
+    .aside-rule { border-top:1px solid #416157; padding-top:18px; margin-top:54px; color:#a3bcab; font-size:12px; }
+    .form { background:var(--paper); color:var(--ink); padding:38px; border-radius:18px; }
+    .form h3 { font-size:24px; margin-bottom:5px; }
+    .form > p { color:var(--muted); font-size:13px; }
+    .field-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin:28px 0 20px; }
+    label { display:block; font-size:12px; font-weight:700; margin-bottom:7px; }
+    input,select { display:block; width:100%; padding:13px 14px; border:1px solid #cbd5cb; border-radius:8px; color:var(--ink); background:#fff; outline-color:#709b83; }
+    .checkboxes { border:0; padding:0; margin:8px 0 20px; }
+    legend { font-size:12px; font-weight:700; margin-bottom:10px; }
+    .check-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+    .check { display:flex; gap:9px; align-items:center; margin:0; font-weight:500; color:#52655b; }
+    .check input { width:auto; accent-color:var(--green); }
+    .form .btn { background:var(--green); color:#fff; width:100%; padding:15px; }
+    .form .btn:hover { background:#2a5447; }
+    #brief { display:none; background:#eaf0e7; border:1px solid #d4e0d3; border-radius:10px; padding:18px; margin-top:20px; }
+    #brief.visible { display:block; }
+    #brief pre { white-space:pre-wrap; font:13px/1.6 'DM Sans',sans-serif; margin:10px 0 14px; }
+    #copy { background:transparent; border:1px solid #a9bbaa; border-radius:30px; padding:9px 15px; color:var(--green); font-weight:700; font-size:12px; }
+    .note { font-size:11px !important; color:#718278 !important; margin:16px 0 0; }
+    .foot { background:#0c231f; color:#d8e4d9; padding:55px 0 30px; }
+    .foot-grid { display:flex; justify-content:space-between; gap:50px; border-bottom:1px solid #345047; padding-bottom:55px; }
+    .foot h2 { font-size:32px; max-width:350px; margin:0; }
+    .foot p { color:#a6bbab; font-size:12px; max-width:430px; }
+    .foot a { text-decoration:underline; text-underline-offset:3px; }
+    .foot-bottom { display:flex; justify-content:space-between; gap:20px; padding-top:25px; font-size:11px; color:#9bb2a2; }
+    @media(max-width:1000px) { .wrap { padding:0 28px; } .hero-grid { grid-template-columns:1fr 1fr; gap:22px; } h1 { font-size:60px; } .route { padding-left:0; } .journey-grid { grid-template-columns:repeat(2,1fr); } .enquire-grid { gap:45px; } }
+    @media(max-width:720px) { .wrap { padding:0 21px; } .nav { height:68px; } .menu { display:block; } .navlinks { display:none; position:absolute; top:100%; left:0; right:0; background:var(--paper); padding:18px 21px 25px; flex-direction:column; align-items:stretch; gap:18px; border-bottom:1px solid var(--line); box-shadow:0 20px 30px #10251d19; } .navlinks.open { display:flex; } .navcta { width:fit-content; } .hero-grid { grid-template-columns:1fr; padding-top:67px; padding-bottom:65px; gap:45px; } h1 { font-size:clamp(50px,12vw,70px); } .intro { font-size:15px; } .route { margin:0; max-width:500px; } .band-inner { flex-wrap:wrap; padding-top:18px; padding-bottom:18px; gap:5px 25px; } .section { padding:70px 0; } .section-head { display:block; } .section-head p { margin-top:18px; } .journey-detail,.enquire-grid { grid-template-columns:1fr; gap:25px; } .service-grid { grid-template-columns:1fr; } .service,.service:not(:first-child) { border-right:0; border-bottom:1px solid var(--line); padding:30px 0; } .service h3 { margin:18px 0 10px; } .service p { min-height:0; } .steps { grid-template-columns:1fr 1fr; } .step { padding:25px 12px 0 0; margin:0 !important; border:0 !important; } .step h3 { margin:22px 0 8px; } .aside-rule { margin-top:25px; } .foot-grid { display:block; } .foot-grid p { margin-top:24px; } }
+    @media(max-width:470px) { .journey-grid { gap:9px; } .journey { min-height:245px; padding:17px; } .j-title { font-size:18px; } .j-desc { font-size:11px; } .detail-list { grid-template-columns:1fr; } .field-grid,.check-grid { grid-template-columns:1fr; } .form { padding:23px; } .foot-bottom { display:block; } .hero-actions { gap:22px; } .stop { gap:12px; } .route-line { left:31px; } .route-caption { margin-left:38px; } .route-end { margin-left:75px; } .stop-card { padding:17px; } }
+    @media(prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto !important; transition:none !important; } }
+  </style>
+</head>
+<body>
+  <div class="concept">Concept preview · Working name and service details to be confirmed</div>
+  <header class="top">
+    <div class="wrap nav">
+      <a class="brand" href="#home" aria-label="Arrival Namibia concept home"><span class="brandmark">A</span><span class="brandtext">ARRIVAL<small>NAMIBIA</small></span></a>
+      <button class="menu" id="menu" aria-label="Open menu" aria-expanded="false" aria-controls="navlinks">☰</button>
+      <nav class="navlinks" id="navlinks" aria-label="Main navigation">
+        <a href="#journeys">Your journey</a><a href="#services">Services</a><a href="#how">How it works</a><a class="navcta" href="#enquire">Plan your arrival <span aria-hidden="true">↗</span></a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <section class="hero" id="home">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="eyebrow">Support for coming to Namibia</div>
+          <h1>A better way to <em>arrive.</em></h1>
+          <p class="intro">Paperwork, your first ride, a place to stay. Tell us why you are coming and we will help you plan the practical steps around your arrival.</p>
+          <div class="hero-actions"><a class="btn" href="#enquire">Plan your arrival <span aria-hidden="true">↗</span></a><a class="textlink" href="#journeys">Explore your options</a></div>
+        </div>
+        <div class="route" aria-label="Example journey from planning to arrival">
+          <div class="route-line" aria-hidden="true"></div>
+          <p class="route-caption">One journey, connected</p>
+          <div class="stop"><span class="stop-num">01</span><div class="stop-card"><b>Before you travel</b><small>Understand the application route and documents to prepare.</small></div></div>
+          <div class="stop"><span class="stop-num">02</span><div class="stop-card"><b>When you land</b><small>Arrange your airport pick-up and first destination.</small></div></div>
+          <div class="stop"><span class="stop-num">03</span><div class="stop-card"><b>While you settle in</b><small>Coordinate a stay and the next practical steps.</small></div></div>
+          <div class="route-end">Windhoek · Namibia</div>
+        </div>
+      </div>
+    </section>
+    <div class="band"><div class="wrap band-inner"><b>Coming for work, study, care or a holiday?</b><span>Start with your reason for travelling.</span><span>Build the rest around it.</span></div></div>
+    <section class="section" id="journeys">
+      <div class="wrap">
+        <div class="section-head"><div><div class="kicker">Your journey</div><h2>What brings you here?</h2></div><p>Choose a reason for travelling. The support you need may be different for every visit.</p></div>
+        <div class="journey-grid" role="group" aria-label="Choose a journey">
+          <button class="journey" type="button" data-key="work" aria-pressed="true"><span class="j-num">01 / WORK</span><span class="j-title">I am coming<br>to work</span><span class="j-desc">Employment and assignment support, followed by arrival logistics.</span><span class="j-arrow" aria-hidden="true">↗</span></button>
+          <button class="journey" type="button" data-key="study" aria-pressed="false"><span class="j-num">02 / STUDY</span><span class="j-title">I am coming<br>to study</span><span class="j-desc">Study permit preparation and a more settled first few days.</span><span class="j-arrow" aria-hidden="true">↗</span></button>
+          <button class="journey" type="button" data-key="medical" aria-pressed="false"><span class="j-num">03 / MEDICAL</span><span class="j-title">I am travelling<br>for care</span><span class="j-desc">Travel paperwork and practical coordination around a visit.</span><span class="j-arrow" aria-hidden="true">↗</span></button>
+          <button class="journey" type="button" data-key="holiday" aria-pressed="false"><span class="j-num">04 / HOLIDAY</span><span class="j-title">I am here<br>to explore</span><span class="j-desc">Entry planning, accommodation and a simple start to the trip.</span><span class="j-arrow" aria-hidden="true">↗</span></button>
+        </div>
+        <div class="journey-detail" id="journey-detail" aria-live="polite">
+          <div><div class="tag">Selected journey / 01</div><h3>Working in Namibia</h3><p>We start with your purpose and timing, then identify what assistance you are asking for. The official authority decides visa and permit outcomes.</p></div>
+          <div class="detail-list"><span>Initial application conversation</span><span>Document preparation support</span><span>Airport transfer planning</span><span>Accommodation coordination</span></div>
+        </div>
+      </div>
+    </section>
+    <section class="section services" id="services">
+      <div class="wrap"><div class="section-head"><div><div class="kicker">What we can coordinate</div><h2>From the first form<br>to the first day.</h2></div><p>A connected service can remove the gaps between a permit application, a flight arrival and finding your feet on the ground.</p></div>
+        <div class="service-grid">
+          <article class="service"><div class="number">01 / PREPARE</div><h3>Visas & permits</h3><p>Help understanding the relevant application pathway and preparing documents for the official process.</p><ul><li>Work and study enquiries</li><li>Visitor visa enquiries</li><li>Application coordination</li></ul></article>
+          <article class="service"><div class="number">02 / ARRIVE</div><h3>Airport transfers</h3><p>A planned pick-up from the airport to your first destination, with arrival details gathered in advance.</p><ul><li>Flight and arrival details</li><li>Pick-up coordination</li><li>Destination confirmation</li></ul></article>
+          <article class="service"><div class="number">03 / SETTLE</div><h3>Stays & practical help</h3><p>Support finding a suitable stay and coordinating the practical parts of the visit, based on your needs.</p><ul><li>Hotel and stay enquiries</li><li>Medical visit logistics</li><li>Custom arrival plans</li></ul></article>
+        </div>
+      </div>
+    </section>
+    <section class="section process" id="how">
+      <div class="wrap"><div class="kicker">The process</div><h2>Know what happens next.</h2>
+        <div class="steps"><div class="step"><div class="step-num">01 / ENQUIRE</div><h3>Tell us your plans</h3><p>Share your reason for travel, timing and the kind of support you want.</p></div><div class="step"><div class="step-num">02 / REVIEW</div><h3>Get a clear scope</h3><p>We confirm what can be handled, what depends on third parties and the proposed cost.</p></div><div class="step"><div class="step-num">03 / PREPARE</div><h3>Work through the steps</h3><p>Documents, reservations and arrival details are coordinated as agreed.</p></div><div class="step"><div class="step-num">04 / ARRIVE</div><h3>Land with a plan</h3><p>You know where you are going and who to contact about the services arranged.</p></div></div>
+      </div>
+    </section>
+    <section class="section enquire" id="enquire">
+      <div class="wrap enquire-grid"><div><div class="eyebrow">Start here</div><h2>Tell us about your arrival.</h2><p>A few details help us understand the shape of your trip. No passport number or medical records are needed for this first conversation.</p><div class="aside-rule">Concept interaction. This preview prepares an enquiry summary on your device. It does not submit or store your information.</div></div>
+        <form class="form" id="intake"><h3>Build your enquiry</h3><p>Choose the support you may need. Exact requirements and prices can be confirmed in a consultation.</p>
+          <div class="field-grid"><div><label for="purpose">Reason for coming</label><select id="purpose" required><option value="" disabled selected>Choose one</option><option>Work</option><option>Study</option><option>Medical visit</option><option>Holiday</option><option>Other</option></select></div><div><label for="month">When are you travelling?</label><input id="month" type="month" required></div><div><label for="nationality">Your nationality</label><input id="nationality" type="text" maxlength="60" placeholder="For example, Angolan" required></div><div><label for="destination">First destination in Namibia</label><input id="destination" type="text" maxlength="80" placeholder="For example, Windhoek"></div></div>
+          <fieldset class="checkboxes"><legend>I may need help with</legend><div class="check-grid"><label class="check"><input type="checkbox" value="Visa or permit assistance"> Visa or permit assistance</label><label class="check"><input type="checkbox" value="Airport transfer"> Airport transfer</label><label class="check"><input type="checkbox" value="Accommodation"> Accommodation</label><label class="check"><input type="checkbox" value="Medical visit logistics"> Medical visit logistics</label></div></fieldset>
+          <button class="btn" type="submit">Prepare enquiry summary <span aria-hidden="true">↗</span></button><p class="note">No application is submitted from this concept website. Do not include sensitive documents at this stage.</p>
+          <div id="brief" aria-live="polite"><b>Your enquiry summary</b><pre id="brief-text"></pre><button type="button" id="copy">Copy summary</button></div>
+        </form>
+      </div>
+    </section>
+  </main>
+  <footer class="foot"><div class="wrap"><div class="foot-grid"><div><h2>Every arrival starts somewhere.</h2></div><div><p>This is a private service concept and is not affiliated with the Government of Namibia. Visa and permit decisions remain with the relevant authorities. Medical coordination would cover practical arrangements, not medical advice.</p><p>Check current information with the <a href="https://eservices.mhaiss.gov.na/" target="_blank" rel="noopener noreferrer">Ministry of Home Affairs</a> and tourism business requirements with the <a href="https://visitnamibia.com.na/registration-forms/" target="_blank" rel="noopener noreferrer">Namibia Tourism Board</a>.</p></div></div><div class="foot-bottom"><span>Arrival Namibia · Working name and website concept</span><span>Service scope, registration and contact details to be confirmed</span></div></div></footer>
+  <script>
+    const journeys = {
+      work: { number:'01', title:'Working in Namibia', summary:'We start with your purpose and timing, then identify what assistance you are asking for. The official authority decides visa and permit outcomes.', items:['Initial application conversation','Document preparation support','Airport transfer planning','Accommodation coordination'] },
+      study: { number:'02', title:'Studying in Namibia', summary:'Plan the paperwork and practical arrival details around your enrolment and intended stay.', items:['Study permit enquiry','Institution and timing details','First-night stay planning','Airport transfer planning'] },
+      medical: { number:'03', title:'Travelling for care', summary:'Coordinate the travel side of a medical visit with care and privacy. Medical advice and treatment remain with qualified providers.', items:['Travel document enquiry','Appointment logistics','Accessible transfer enquiry','Stay for patient or companion'] },
+      holiday: { number:'04', title:'Exploring Namibia', summary:'Plan a smoother arrival, from understanding the official entry process to reaching your first stay.', items:['Entry requirement enquiry','Airport transfer planning','Accommodation enquiry','Custom arrival arrangements'] }
+    };
+    const cards = [...document.querySelectorAll('.journey')];
+    const detail = document.getElementById('journey-detail');
+    cards.forEach(card => card.addEventListener('click', () => {
+      cards.forEach(c => c.setAttribute('aria-pressed',String(c === card)));
+      const data = journeys[card.dataset.key];
+      detail.querySelector('.tag').textContent = 'Selected journey / ' + data.number;
+      detail.querySelector('h3').textContent = data.title;
+      detail.querySelector('p').textContent = data.summary;
+      detail.querySelector('.detail-list').replaceChildren(...data.items.map(item => { const span = document.createElement('span'); span.textContent = item; return span; }));
+      document.getElementById('purpose').value = ({work:'Work',study:'Study',medical:'Medical visit',holiday:'Holiday'})[card.dataset.key];
+    }));
+    const menu = document.getElementById('menu');
+    const links = document.getElementById('navlinks');
+    menu.addEventListener('click', () => { const open = links.classList.toggle('open'); menu.setAttribute('aria-expanded',String(open)); menu.setAttribute('aria-label',open ? 'Close menu' : 'Open menu'); });
+    links.querySelectorAll('a').forEach(link => link.addEventListener('click', () => { links.classList.remove('open'); menu.setAttribute('aria-expanded','false'); menu.setAttribute('aria-label','Open menu'); }));
+    document.getElementById('intake').addEventListener('submit', event => {
+      event.preventDefault();
+      const checked = [...document.querySelectorAll('.check input:checked')].map(input => input.value);
+      const summary = ['Reason for travel: ' + document.getElementById('purpose').value,'Travel month: ' + document.getElementById('month').value,'Nationality: ' + document.getElementById('nationality').value.trim(),'First destination: ' + (document.getElementById('destination').value.trim() || 'To confirm'),'Support requested: ' + (checked.join(', ') || 'To discuss')].join('\n');
+      document.getElementById('brief-text').textContent = summary;
+      document.getElementById('brief').classList.add('visible');
+      document.getElementById('copy').textContent = 'Copy summary';
+      document.getElementById('brief').scrollIntoView({behavior:'smooth',block:'nearest'});
+    });
+    document.getElementById('copy').addEventListener('click', async () => {
+      const value = document.getElementById('brief-text').textContent;
+      try { await navigator.clipboard.writeText(value); document.getElementById('copy').textContent = 'Copied'; }
+      catch { const range = document.createRange(); range.selectNodeContents(document.getElementById('brief-text')); getSelection().removeAllRanges(); getSelection().addRange(range); document.getElementById('copy').textContent = 'Selected text · copy it'; }
+    });
+  </script>
+</body>
+</html>
