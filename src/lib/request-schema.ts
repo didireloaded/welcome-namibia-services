@@ -7,7 +7,7 @@ export const requestSchema = z
       nationality: z.string().trim().min(2).max(80),
       phone: z.string().max(40).optional(),
     }),
-    service: z.enum(["visa", "transfers", "medical", "vacations"]),
+    service: z.enum(["visa", "transfers", "medical", "vacations", "esim"]),
     purpose: z.enum(["Work", "Study", "Visitor", "Medical"]),
     package: z.string().max(100).optional(),
     details: z

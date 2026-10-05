@@ -1,52 +1,51 @@
-# Arrival Namibia preview
+# Arrival Namibia
 
-A Next.js and TypeScript website preview with a persistent sample request workflow built from the supplied travel website reference. Arrival Namibia is a working identity.
+A mobile-first web experience for a Namibia travel and arrival support business. The design name is provisional; the client has not confirmed whether it should be Welcome Namibia Services or Arrival Namibia.
 
-## Run
+## Run locally
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Open http://localhost:3000.
+Open <http://localhost:3000>.
 
-## Routes
+## Public pages
 
-- `/` Public website
-- `/client` Sample client dashboard
-- `/admin` Sample operations dashboard
-- `/login` Portal entry preview
+- `/` Home and enquiry entry
+- `/services` Overview
+- `/services/visa-permits`, `/services/transfers`, `/services/medical`, `/services/vacations`, `/services/esim`
+- `/destinations`, `/gallery`, `/partners`
+- `/contact`
+- `/login`, `/client`, `/admin` Browser-local portal workflow
 
-## Included interactions
+## Enquiries and portal data
 
-Hero slides, service tabs and carousel, package enquiries, four-step request flows for each service, conditional preparation checklists, local file-name preview, FAQ accordions, editorial article dialogs, consultation enquiry summaries, admin table filtering and sample status changes, document verification controls, sample transfer dispatch and printable sample invoice.
+A small client-side adapter in `src/lib/browser-store.ts` writes the current browser's request records, drafts, message notes and workspace updates to local storage. Nothing is sent to a server. Requests in one browser are not shared with another browser, device or person. The portal is a workflow illustration, not an authenticated client or agency account.
 
-## Data boundaries
+The form does not collect passport numbers or medical records, and file selection stores names only. Do not enter real client details in this prototype. Payment, email/SMS/WhatsApp, flight tracking, provider bookings, secure document storage and government submissions are not connected. A saved enquiry is not an application or booking confirmation. Quotes, official fees and supplier charges must be confirmed separately before a real launch.
 
-This is a shared demo, without authentication. Forms save fictional enquiries, document names and status history to a local SQLite database in `data/preview.sqlite`. No file bytes are uploaded. Passport numbers are discarded on the server. Driver assignment and sample document verification also persist on the server. The browser stores only the most recent request reference to select the matching client view. Requests remain after a server restart, subject to the host filesystem lifetime.
+To clear local records, remove the site's `arrival-browser-*` and `arrival-request-draft-*` entries in browser storage.
 
-This is **not** the intended production PostgreSQL/Prisma/Auth.js backend. All preview records and update endpoints are shared. Use fictional details only, never real passports or medical records. Production mode disables the demo API by default. To run the shared demo deliberately with `next start`, set `ENABLE_DEMO_BACKEND=true`; do not enable this on a live customer site. Requires Node 24 for the built-in SQLite API.
-
-Payment, notification, protected document upload and real account creation remain unconnected. Requests are enquiries, not government applications. To reset the demo, stop the server and remove the `data/` directory. `DEMO_DATA_DIR` optionally selects a private writable directory. Never commit or package this directory.
-
-## Backend phase
-
-The intended stack in the original brief includes PostgreSQL/Prisma, Auth.js, protected document storage, server-side validation, notifications and payments. Confirm the client's service scope, business identity, registration, pricing, contact details, languages, provider relationships and payment availability before connecting these features. See `docs/PROJECT_BRIEF.md` and `docs/FEATURE_ROADMAP.md`.
-
-## Design
-
-The supplied reference guides the rounded panels, photographic hero, glass navigation, service carousel, editorial gallery, geometric pricing cards and large booking section. The page is adapted to Namibia arrival support. No invented testimonial, accreditation, licence or client count is presented as fact.
-
-## Photography
-
-The Namibia landscape is **Elim II** by **Dominik Angstwurm**, licensed **CC BY-SA 3.0**. The source is https://commons.wikimedia.org/wiki/File:Elim_Ii_(197878137).jpeg. Displayed with CSS cropping and an overlay. Attribution is included in the footer. Other travel, study, medical and accommodation images are Unsplash stock used for visual exploration, not claims of the agency's fleet, staff, properties or partnerships. Exact asset URLs are in `docs/IMAGE_CREDITS.md`.
-
-## Verify
+## Verification
 
 ```sh
 npm run typecheck
-npm run build
+./node_modules/.bin/next build --webpack
+node --check tests/workflow.cjs
 ```
 
-The browser workflow test is `node tests/workflow.cjs` with a development server available in the same network environment. It creates one fictional request.
+`tests/workflow.cjs` contains a Playwright end-to-end flow. Run it only where the configured Playwright browser and a development server are already available.
+
+## Design and factual limits
+
+The supplied visual reference informed the photographic hero, glass navigation, editorial gallery and spacious service layouts. Palette and typography remain provisional until the client confirms the brand. No client count, testimonial, licence, accreditation, medical provider, partner relationship, fixed price or processing promise is represented as fact. Medical coordination is distinct from clinical care.
+
+## Images
+
+The Namibia landscape is Elim II by Dominik Angstwurm, CC BY-SA 3.0. Source and attribution: <https://commons.wikimedia.org/wiki/File:Elim_Ii_(197878137).jpeg>. Attribution is in the footer. Other travel, study, medical and accommodation images are Unsplash stock, used only to explore the layout and not as depictions of the agency's staff, fleet, properties or partners. Exact asset URLs are in `docs/IMAGE_CREDITS.md`.
+
+## Before production
+
+Confirm the business name, registration and contact details, language needs, service scope, fees, refund terms, provider relationships, immigration wording and privacy/retention rules. Production requires authenticated server-side storage, protected document uploads, notification/payment integrations and appropriate legal review. See `docs/PROJECT_BRIEF.md` and `docs/FEATURE_ROADMAP.md`.

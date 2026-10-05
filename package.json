@@ -1,10 +1,10 @@
 {
   "name": "arrival-namibia-ui",
   "version": "1.0.0",
-  "description": "Travel and arrival service UI with client and agency portal previews",
+  "description": "Namibia travel and arrival support website prototype",
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0 --port 3000",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start --hostname 0.0.0.0 --port 3000",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write src next.config.ts tsconfig.json postcss.config.mjs"

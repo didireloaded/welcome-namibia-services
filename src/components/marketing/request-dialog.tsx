@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import * as Dialog from "@radix-ui/react-dialog";
+import * as Dialog from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,7 +14,10 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-export type ServiceKey = "visa" | "transfers" | "medical" | "vacations";
+import { Field } from "@/components/ui/field";
+import { ProgressSteps } from "@/components/ui/progress-steps";
+import { createLocalRequest } from "@/lib/browser-store";
+export type ServiceKey = "visa" | "transfers" | "medical" | "vacations" | "esim";
 const personalSchema = z.object({
   name: z.string().trim().min(2, "Enter your name"),
   email: z.email("Enter a valid email"),
@@ -27,6 +30,7 @@ const labels: Record<ServiceKey, string> = {
   transfers: "Airport transfer enquiry",
   medical: "Medical visit enquiry",
   vacations: "Stay & vacation enquiry",
+  esim: "Travel connectivity enquiry",
 };
 const checklists: Record<string, string[]> = {
   Work: [
@@ -58,18 +62,21 @@ export function RequestDialog({
   onClose: () => void;
 }) {
   const [step, setStep] = useState(0);
-  const [type, setType] = useState("Work");
+  const [type, setType] = useState<"Work" | "Study" | "Visitor" | "Medical">("Work");
   const [files, setFiles] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [reference, setReference] = useState("");
   const [details, setDetails] = useState<Record<string, string>>({});
+  const [draftReady,setDraftReady]=useState(false);
+  const [draftSaved,setDraftSaved]=useState(false);
   const {
     register,
     handleSubmit,
     trigger,
     getValues,
+    watch,
     reset,
     formState: { errors },
   } = useForm<Personal>({ resolver: zodResolver(personalSchema) });
@@ -82,9 +89,31 @@ export function RequestDialog({
       setSaveError("");
       setReference("");
       setDetails({});
-      reset();
+      setDraftSaved(false);
+      setDraftReady(false);
+      try {
+        const draft=JSON.parse(localStorage.getItem(`arrival-request-draft-${request.service}`)||"null");
+        setStep(draft?Math.min(3,Math.max(0,draft.step||0)):0);
+        setType(draft?.type||"Work");
+        setDetails(draft?.details||{});
+        setFiles(draft?.files||[]);
+        reset(draft?.personal||{});
+      } catch {reset();}
+      setDraftReady(true);
     }
   }, [request, reset]);
+  const personalDraft=watch();
+  const personalDraftJson=JSON.stringify(personalDraft);
+  useEffect(()=>{
+    if(!request||!draftReady||submitted)return;
+    const timer=window.setTimeout(()=>{
+      try {
+        localStorage.setItem(`arrival-request-draft-${request.service}`,JSON.stringify({step,type,details,files,personal:JSON.parse(personalDraftJson)}));
+        setDraftSaved(true);
+      } catch {setSaveError("Your draft could not be saved in this browser. You can keep working while the form stays open.");}
+    },450);
+    return()=>window.clearTimeout(timer);
+  },[request,draftReady,submitted,step,type,details,files,personalDraftJson]);
   const next = async () => {
     if (step === 0 && !(await trigger())) return;
     setStep(Math.min(step + 1, 3));
@@ -119,33 +148,21 @@ export function RequestDialog({
           <Dialog.Close className="dialog-close" aria-label="Close request">
             <X size={20} />
           </Dialog.Close>
-          <div className="form-overline">
-            WELCOME NAMIBIA SERVICES / ENQUIRY
-          </div>
+          <div className="form-overline">ARRIVAL NAMIBIA / {labels[service].toUpperCase()}</div>
           <Dialog.Title>
-            {submitted
-              ? "Your enquiry draft is saved."
-              : request?.package
-                ? `${request.package} enquiry`
-                : labels[service]}
+            {submitted ? "Your enquiry is saved." : labels[service]}
           </Dialog.Title>
           <Dialog.Description>
             {submitted
-              ? "Your draft has been saved for this demonstration. It has not been sent to the agency."
+              ? "Your enquiry is saved in this browser and available in the agency workspace on this device."
               : "Start with the details of your visit. Your request can be reviewed before services are confirmed."}
           </Dialog.Description>
           {!submitted ? (
             <>
-              <div className="form-progress">
-                {["About you", "Your visit", "Documents", "Review"].map(
-                  (s, i) => (
-                    <span className={i <= step ? "reached" : ""} key={s}>
-                      <b>{i < step ? <Check size={12} /> : i + 1}</b>
-                      <small>{s}</small>
-                    </span>
-                  ),
-                )}
-              </div>
+              <ProgressSteps
+                steps={["About you", "Your visit", "Documents", "Review"]}
+                current={step}
+              />
               <form
                 onSubmit={handleSubmit(async (personal) => {
                   if (step < 3) {
@@ -154,28 +171,16 @@ export function RequestDialog({
                     setSaving(true);
                     setSaveError("");
                     try {
-                      const response = await fetch("/api/demo/requests", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
+                      const record = createLocalRequest({
                           personal,
                           service,
                           purpose: type,
                           package: request?.package,
                           details,
                           documents: files,
-                        }),
                       });
-                      const result = await response.json();
-                      if (!response.ok)
-                        throw new Error(
-                          result.error || "Unable to save your request.",
-                        );
-                      localStorage.setItem(
-                        "arrival-preview-reference",
-                        result.record.id,
-                      );
-                      setReference(result.record.id);
+                      localStorage.removeItem(`arrival-request-draft-${service}`);
+                      setReference(record.id);
                       setSubmitted(true);
                     } catch (error) {
                       setSaveError(
@@ -191,54 +196,35 @@ export function RequestDialog({
               >
                 {step === 0 && (
                   <div className="form-grid">
-                    <label>
-                      Full name
-                      <input
-                        {...register("name")}
-                        autoComplete="name"
-                        placeholder="Your full name"
-                      />
-                      {errors.name && (
-                        <small className="field-error">
-                          {errors.name.message}
-                        </small>
-                      )}
-                    </label>
-                    <label>
-                      Email address
-                      <input
-                        {...register("email")}
-                        type="email"
-                        autoComplete="email"
-                        placeholder="you@example.com"
-                      />
-                      {errors.email && (
-                        <small className="field-error">
-                          {errors.email.message}
-                        </small>
-                      )}
-                    </label>
-                    <label>
-                      Nationality
-                      <input
-                        {...register("nationality")}
-                        placeholder="Your nationality"
-                      />
-                      {errors.nationality && (
-                        <small className="field-error">
-                          {errors.nationality.message}
-                        </small>
-                      )}
-                    </label>
-                    <label>
-                      Phone number <span className="optional">optional</span>
-                      <input
-                        {...register("phone")}
-                        type="tel"
-                        autoComplete="tel"
-                        placeholder="Country code + number"
-                      />
-                    </label>
+                    <Field
+                      label="Full name"
+                      {...register("name")}
+                      autoComplete="name"
+                      placeholder="Your full name"
+                      error={errors.name?.message}
+                    />
+                    <Field
+                      label="Email address"
+                      {...register("email")}
+                      type="email"
+                      autoComplete="email"
+                      placeholder="you@example.com"
+                      error={errors.email?.message}
+                    />
+                    <Field
+                      label="Nationality"
+                      {...register("nationality")}
+                      placeholder="Your nationality"
+                      error={errors.nationality?.message}
+                    />
+                    <Field
+                      label="Phone number"
+                      optional
+                      {...register("phone")}
+                      type="tel"
+                      autoComplete="tel"
+                      placeholder="Country code + number"
+                    />
                   </div>
                 )}
                 {step === 1 && (
@@ -249,7 +235,7 @@ export function RequestDialog({
                           Application purpose
                           <select
                             value={type}
-                            onChange={(e) => setType(e.target.value)}
+                            onChange={(e) => setType(e.target.value as "Work" | "Study" | "Visitor" | "Medical")}
                           >
                             {Object.keys(checklists).map((t) => (
                               <option key={t}>{t}</option>
@@ -314,7 +300,7 @@ export function RequestDialog({
                         <p className="field-full helper-text">
                           Clinical details and records should be shared only
                           after a secure provider workflow is confirmed. Use
-                          fictional information in this form.
+                          fictional details only.
                         </p>
                       </>
                     )}
@@ -326,6 +312,15 @@ export function RequestDialog({
                         {field("guests", "Number of guests", "number")}
                         {field("budget", "Budget range", "text", "To discuss")}
                         {field("preferences", "Special requests")}
+                      </>
+                    )}
+                    {service === "esim" && (
+                      <>
+                        {field("destination", "Destination", "text", "Namibia")}
+                        {field("arrival", "Arrival date", "date")}
+                        {field("device", "Phone model", "text", "Brand and model")}
+                        {field("data", "Expected data use", "text", "To discuss")}
+                        <p className="field-full helper-text">Plan availability, network coverage, compatibility and price need confirmation from the agency or provider before purchase.</p>
                       </>
                     )}
                   </div>
@@ -347,6 +342,8 @@ export function RequestDialog({
                             ]
                           : service === "transfers"
                             ? ["Flight and destination details"]
+                            : service === "esim"
+                              ? ["Phone compatibility to confirm", "Destination and travel dates"]
                             : ["Preferred dates and stay requirements"]
                       ).map((d) => (
                         <span key={d}>
@@ -356,13 +353,12 @@ export function RequestDialog({
                       ))}
                       <p className="helper-text">
                         Final document requirements must be confirmed for your
-                        circumstances. Only file names are shown here; file
-                        contents are not uploaded.
+                        circumstances. File names stay in this browser. No file contents are uploaded or saved.
                       </p>
                     </div>
                     <label className="upload-zone">
                       <UploadCloud size={27} />
-                      <b>Choose sample documents</b>
+                      <b>Choose filenames for this enquiry</b>
                       <span>PDF, JPG or PNG · names shown only</span>
                       <input
                         type="file"
@@ -417,7 +413,7 @@ export function RequestDialog({
                       </b>
                     </div>
                     <div>
-                      <span>Sample documents</span>
+                      <span>Selected filenames</span>
                       <b>
                         {files.length
                           ? files.join(", ")
@@ -440,6 +436,7 @@ export function RequestDialog({
                   </p>
                 )}
                 <div className="form-actions">
+                  <small className="draft-saved" role="status">{draftSaved?"Draft saved in this browser":"Your draft saves as you type"}</small>
                   {step > 0 ? (
                     <Button
                       type="button"
@@ -471,7 +468,7 @@ export function RequestDialog({
                       className="dark-button"
                       disabled={saving}
                     >
-                      {saving ? "Saving…" : "Save enquiry draft"}{" "}
+                      {saving ? "Saving…" : "Save request"}{" "}
                       <Check size={16} />
                     </Button>
                   )}
@@ -483,19 +480,18 @@ export function RequestDialog({
               <div>
                 <Check size={33} />
               </div>
-              <h3>Draft saved.</h3>
+              <h3>Everything in one place.</h3>
               <p>
-                Your reference: {reference}. This demonstration does not send
-                the enquiry.
+                Your reference: {reference}. Follow this request in the
+                client portal.
               </p>
-              <Button className="pill-button dark-button" onClick={onClose}>
-                Close <ArrowRight size={16} />
-              </Button>
+              <a href="/client" className="pill-button dark-button">
+                View your request <ArrowRight size={16} />
+              </a>
             </div>
           )}
           <p className="helper-text bottom-note">
-            For this presentation, use fictional details only. No document
-            contents are uploaded. Visa decisions remain with the relevant
+            This enquiry is saved only in this browser. Use fictional details only. No file contents are uploaded. Visa decisions remain with the relevant
             authorities.
           </p>
         </Dialog.Content>
