@@ -47,6 +47,7 @@ export function createRequest(input: SavedRequest) {
     transfers: "Airport transfer",
     medical: "Medical visit coordination",
     vacations: "Stay & vacation enquiry",
+    esim: "Connectivity & eSIM guidance",
   };
   const record: StoredRequest = {
     id: `REQ-${randomUUID()}`,
