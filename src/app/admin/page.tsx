@@ -1,4 +1,2 @@
-import { Portal } from "@/components/dashboard/portal";
-export default function AdminPage() {
-  return <Portal admin />;
-}
+import { redirect } from "next/navigation";
+export default function Page(){redirect("/enquiry")}

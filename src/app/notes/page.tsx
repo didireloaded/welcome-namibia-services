@@ -1,5 +1,2 @@
-import { LandingPage } from "@/components/marketing/landing-page";
-
-export default function NotesPage() {
-  return <LandingPage view="notes" />;
-}
+import { redirect } from "next/navigation";
+export default function Page(){redirect("/credits")}

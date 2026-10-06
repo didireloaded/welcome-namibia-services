@@ -1,5 +1,2 @@
-import { PackagesOverview } from "@/components/marketing/package-pages";
-
-export default function PackagesPage() {
-  return <PackagesOverview />;
-}
+import { Packages } from "@/website/pages";
+export default function Page(){return <Packages/>}

@@ -1,5 +1,2 @@
-import { LandingPage } from "@/components/marketing/landing-page";
-
-export default function FaqPage() {
-  return <LandingPage view="faq" />;
-}
+import { redirect } from "next/navigation";
+export default function Page(){redirect("/contact#faq")}

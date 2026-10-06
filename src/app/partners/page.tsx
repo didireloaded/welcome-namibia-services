@@ -1,8 +1,2 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
-import { PageFrame, EnquiryButton } from "@/components/marketing/page-frame";
-import { SectionHeading } from "@/components/ui/section-heading";
-export const metadata:Metadata={title:"Working with local providers | Arrival Namibia",description:"Learn how supplier arrangements are confirmed for travel and arrival enquiries."};
-const steps=["Tell us what you need and when you plan to travel.","We check which relevant providers can support the request.","You review the scope, price and terms before confirming."];
-export default function PartnersPage(){return <PageFrame><section className="content-hero"><span>OUR PROVIDER NETWORK</span><h1>The right local help, for your plans.</h1><p>Travel arrangements depend on availability and confirmed supplier terms. We share provider details as part of each suitable enquiry.</p><EnquiryButton>Discuss a trip</EnquiryButton></section><SectionHeading eyebrow="HOW ARRANGEMENTS WORK" title="Clarity before you confirm.">We only describe a booking or partnership once the details are confirmed for your request.</SectionHeading><div className="partner-steps">{steps.map((step,index)=><article key={step}><span>0{index+1}</span><Check size={18}/><p>{step}</p></article>)}</div><div className="service-note"><b>No assumed affiliations</b><p>We do not display unverified airline, hotel, clinic or tour-operator logos. Provider name, availability, charges and cancellation terms should be confirmed in writing before a booking is made.</p><Link href="/contact">Ask a question <ArrowRight size={15}/></Link></div></PageFrame>}
+import { redirect } from "next/navigation";
+export default function Page(){redirect("/credits")}

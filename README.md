@@ -1,6 +1,6 @@
-# Arrival Namibia
+# Welcome Namibia Services
 
-A mobile-first web experience for a Namibia travel and arrival support business. The design name is provisional; the client has not confirmed whether it should be Welcome Namibia Services or Arrival Namibia.
+A responsive Namibia travel and arrival website using the supplied “Modern Responsive Travel Website” interface. The React source has been adapted to Next.js navigation without importing the export's Vite configuration or React Router.
 
 ## Run locally
 
@@ -16,17 +16,26 @@ Open <http://localhost:3000>.
 - `/` Home and enquiry entry
 - `/services` Overview
 - `/services/visa-permits`, `/services/transfers`, `/services/medical`, `/services/vacations`, `/services/esim`
-- `/destinations`, `/gallery`, `/partners`
+- `/destinations`, `/destinations/[region]`, `/destinations/[region]/[place]`
+- `/journey`, `/packages`, `/packages/[slug]`, `/packages/build`
 - `/contact`
-- `/login`, `/client`, `/admin` Browser-local portal workflow
+- `/enquiry`, `/credits`
+- `/booking` Sample consultation scheduling, rescheduling and cancellation
+- `/client` Interactive client workspace with checklist, timeline, sample quote and simulated enquiry acknowledgements
+- `/legal` Prototype privacy, scope and cancellation-policy summary
+- `/login` redirects to the client prototype; no authentication is represented.
 
 ## Enquiries and portal data
 
-A small client-side adapter in `src/lib/browser-store.ts` writes the current browser's request records, drafts, message notes and workspace updates to local storage. Nothing is sent to a server. Requests in one browser are not shared with another browser, device or person. The portal is a workflow illustration, not an authenticated client or agency account.
+The enquiry flow in `src/website/components/Enquiry.tsx` saves drafts to browser storage and prepares a downloadable text request. It does not send email or submit to an agency. The new interface does not use the retained legacy demo API.
 
 The form does not collect passport numbers or medical records, and file selection stores names only. Do not enter real client details in this prototype. Payment, email/SMS/WhatsApp, flight tracking, provider bookings, secure document storage and government submissions are not connected. A saved enquiry is not an application or booking confirmation. Quotes, official fees and supplier charges must be confirmed separately before a real launch.
 
-To clear local records, remove the site's `arrival-browser-*` and `arrival-request-draft-*` entries in browser storage.
+To clear the new enquiry draft, remove `welcome-namibia-enquiry-v1` from browser storage. Previous local records are not migrated into the new interface.
+
+The client prototype also uses `welcome-namibia-prototype-v1` and `welcome-namibia-prepared-requests-v1`. Consultation availability and NAD quotation prices are illustrative. No agency notification, real reservation, contract or payment is created. The prototype is marked noindex; approved legal terms, secure auth/storage, monitoring and notification services remain launch requirements.
+
+Run `node tests/client-prototype.cjs` against the running local dev server to verify scheduling, checklist, quotation, simulated delivery, persistence and mobile layout. The test uses installed Google Chrome and an isolated browser context with fictional data.
 
 ## Verification
 

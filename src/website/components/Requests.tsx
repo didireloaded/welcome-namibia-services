@@ -1,0 +1,6 @@
+"use client";
+import {useEffect,useState} from "react";
+import Link from "next/link";
+import {requests,type PreparedRequest} from "../data/requests";
+import {PageHeading} from "./Layout";
+export default function Requests(){const [items,setItems]=useState<PreparedRequest[]>([]);const [ready,setReady]=useState(false);useEffect(()=>{setItems(requests());setReady(true)},[]);return <div className="page"><PageHeading label="MY REQUESTS" title="Your plans, in one place.">Prepared requests saved on this device. Keep a copy before using a different browser.</PageHeading>{!ready?<p role="status">Loading your requests…</p>:items.length?items.map(item=><details className="detail-section" key={item.reference}><summary><strong>{item.reference}</strong> · {item.name} · Prepared</summary><p>Saved {new Date(item.createdAt).toLocaleDateString("en-GB")}. Awaiting agency submission.</p><pre style={{whiteSpace:"pre-wrap",fontFamily:"inherit",lineHeight:1.7}}>{item.summary}</pre></details>):<section className="detail-section"><h2>Start your first arrival plan</h2><p>Your completed enquiries will appear here.</p><Link className="button button-primary" href="/enquiry">Prepare an enquiry →</Link></section>}<Link className="text-link" href="/enquiry">Resume a draft or start a request →</Link></div>}

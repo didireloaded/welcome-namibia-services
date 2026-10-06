@@ -1,2 +1,2 @@
-import { RegionGuide } from "@/components/marketing/region-guide";
-export default function DestinationsPage() { return <RegionGuide />; }
+import { Destinations } from "@/website/pages";
+export default function Page(){return <Destinations/>}
